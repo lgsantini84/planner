@@ -1,0 +1,233 @@
+<!-- app/templates/settings/profile.html -->
+{% extends "base.html" %}
+
+{% block title %}Meu Perfil - Planner Dashboard PRO{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-12">
+            <nav aria-label="breadcrumb" class="mb-4">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('main.dashboard') }}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('settings.profile') }}">Configurações</a></li>
+                    <li class="breadcrumb-item active">Meu Perfil</li>
+                </ol>
+            </nav>
+            
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-user-circle me-2"></i>Meu Perfil</h5>
+                    <span class="badge bg-primary">Usuário</span>
+                </div>
+                
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('settings.profile') }}" id="profileForm">
+                        <div class="row">
+                            <!-- Informações Básicas -->
+                            <div class="col-md-6">
+                                <h6 class="border-bottom pb-2 mb-3"><i class="fas fa-user me-2"></i>Informações Pessoais</h6>
+                                
+                                <div class="mb-3">
+                                    <label for="display_name" class="form-label">Nome de Exibição</label>
+                                    <input type="text" class="form-control" id="display_name" name="display_name" 
+                                           value="{{ current_user.display_name or '' }}" required>
+                                    <div class="form-text">Seu nome como aparece no sistema</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">Email</label>
+                                    <input type="email" class="form-control" id="email" name="email" 
+                                           value="{{ current_user.email or '' }}" required>
+                                    <div class="form-text">Endereço de email para notificações</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="job_title" class="form-label">Cargo</label>
+                                    <input type="text" class="form-control" id="job_title" name="job_title" 
+                                           value="{{ current_user.job_title or '' }}">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="department" class="form-label">Departamento</label>
+                                    <input type="text" class="form-control" id="department" name="department" 
+                                           value="{{ current_user.department or '' }}">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="phone" class="form-label">Telefone</label>
+                                    <input type="text" class="form-control" id="phone" name="phone" 
+                                           value="{{ current_user.phone or '' }}">
+                                </div>
+                            </div>
+                            
+                            <!-- Configurações -->
+                            <div class="col-md-6">
+                                <h6 class="border-bottom pb-2 mb-3"><i class="fas fa-cog me-2"></i>Configurações</h6>
+                                
+                                <div class="mb-3">
+                                    <label for="timezone" class="form-label">Fuso Horário</label>
+                                    <select class="form-select" id="timezone" name="timezone">
+                                        <option value="America/Sao_Paulo" {% if current_user.timezone == 'America/Sao_Paulo' %}selected{% endif %}>
+                                            América/São Paulo (GMT-3)
+                                        </option>
+                                        <option value="America/New_York" {% if current_user.timezone == 'America/New_York' %}selected{% endif %}>
+                                            América/Nova York (GMT-5)
+                                        </option>
+                                        <option value="Europe/London" {% if current_user.timezone == 'Europe/London' %}selected{% endif %}>
+                                            Europa/Londres (GMT+0)
+                                        </option>
+                                        <option value="Europe/Berlin" {% if current_user.timezone == 'Europe/Berlin' %}selected{% endif %}>
+                                            Europa/Berlim (GMT+1)
+                                        </option>
+                                        <option value="Asia/Tokyo" {% if current_user.timezone == 'Asia/Tokyo' %}selected{% endif %}>
+                                            Ásia/Tóquio (GMT+9)
+                                        </option>
+                                        <option value="Australia/Sydney" {% if current_user.timezone == 'Australia/Sydney' %}selected{% endif %}>
+                                            Austrália/Sydney (GMT+10)
+                                        </option>
+                                        <!-- Adicionar mais timezones conforme necessário -->
+                                    </select>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="language" class="form-label">Idioma</label>
+                                    <select class="form-select" id="language" name="language">
+                                        <option value="pt-BR" {% if current_user.language == 'pt-BR' %}selected{% endif %}>Português (Brasil)</option>
+                                        <option value="en-US" {% if current_user.language == 'en-US' %}selected{% endif %}>English (US)</option>
+                                        <option value="es-ES" {% if current_user.language == 'es-ES' %}selected{% endif %}>Español</option>
+                                        <option value="fr-FR" {% if current_user.language == 'fr-FR' %}selected{% endif %}>Français</option>
+                                        <option value="de-DE" {% if current_user.language == 'de-DE' %}selected{% endif %}>Deutsch</option>
+                                    </select>
+                                </div>
+                                
+                                <!-- Informações da Conta -->
+                                <h6 class="border-bottom pb-2 mb-3 mt-4"><i class="fas fa-id-card me-2"></i>Informações da Conta</h6>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">ID do Azure AD</label>
+                                    <input type="text" class="form-control" value="{{ current_user.azure_id or 'Não disponível' }}" readonly>
+                                    <div class="form-text">Seu identificador único no Microsoft Azure Active Directory</div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Data de Criação</label>
+                                    <input type="text" class="form-control" 
+                                           value="{{ current_user.created_at|date_ptbr if current_user.created_at else 'Não disponível' }}" readonly>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Último Login</label>
+                                    <input type="text" class="form-control" 
+                                           value="{{ current_user.last_login|date_ptbr if current_user.last_login else 'Nunca' }}" readonly>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="is_active" disabled 
+                                               {% if current_user.is_active %}checked{% endif %}>
+                                        <label class="form-check-label" for="is_active">Conta Ativa</label>
+                                    </div>
+                                    {% if current_user.is_admin %}
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="is_admin" disabled checked>
+                                        <label class="form-check-label" for="is_admin">Administrador do Sistema</label>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-4">
+                            <div class="col-md-12">
+                                <div class="d-flex justify-content-between">
+                                    <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-arrow-left me-2"></i>Cancelar
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>Salvar Alterações
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Estatísticas do Usuário -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-chart-line me-2"></i>Minhas Estatísticas</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="stat-card p-3 text-center">
+                                        <h2 class="text-primary">{{ current_user.total_tasks_assigned or 0 }}</h2>
+                                        <p class="text-muted mb-0">Tarefas Atribuídas</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="stat-card p-3 text-center">
+                                        <h2 class="text-success">{{ current_user.completed_tasks or 0 }}</h2>
+                                        <p class="text-muted mb-0">Tarefas Concluídas</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="stat-card p-3 text-center">
+                                        <h2 class="text-danger">{{ current_user.overdue_tasks or 0 }}</h2>
+                                        <p class="text-muted mb-0">Tarefas Atrasadas</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="stat-card p-3 text-center">
+                                        <h2 class="text-info">{{ "%.1f"|format(current_user.task_completion_rate or 0) }}%</h2>
+                                        <p class="text-muted mb-0">Taxa de Conclusão</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        // Validação do formulário
+        $('#profileForm').on('submit', function(e) {
+            const email = $('#email').val();
+            if (email && !isValidEmail(email)) {
+                e.preventDefault();
+                showToast('Erro de Validação', 'Por favor, insira um endereço de email válido.', 'danger');
+                $('#email').focus();
+            }
+        });
+        
+        // Função de validação de email
+        function isValidEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+        
+        // Auto-formatar telefone
+        $('#phone').on('input', function() {
+            let value = $(this).val().replace(/\D/g, '');
+            if (value.length > 10) {
+                value = value.replace(/^(\d{2})(\d{5})(\d{4}).*/, '($1) $2-$3');
+            } else if (value.length > 6) {
+                value = value.replace(/^(\d{2})(\d{4})(\d{0,4}).*/, '($1) $2-$3');
+            } else if (value.length > 2) {
+                value = value.replace(/^(\d{2})(\d{0,5})/, '($1) $2');
+            }
+            $(this).val(value);
+        });
+    });
+</script>
+{% endblock %}

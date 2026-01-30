@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+{% block title %}{{ task.title }} - Tarefa{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Task Header -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h1 class="h3 mb-1">{{ task.title }}</h1>
+                        <div class="d-flex align-items-center gap-2 mb-3">
+                            {% if task.status.value == 'completed' %}
+                            <span class="badge bg-success">Concluída</span>
+                            {% elif task.is_overdue %}
+                            <span class="badge bg-danger">Atrasada</span>
+                            {% elif task.status.value == 'in_progress' %}
+                            <span class="badge bg-warning">Em Progresso</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Não Iniciada</span>
+                            {% endif %}
+                            
+                            {% if task.priority.value == 3 %}
+                            <span class="badge bg-danger">Urgente</span>
+                            {% elif task.priority.value == 2 %}
+                            <span class="badge bg-warning">Alta</span>
+                            {% elif task.priority.value == 1 %}
+                            <span class="badge bg-info">Média</span>
+                            {% else %}
+                            <span class="badge bg-success">Baixa</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="btn-group">
+                        <a href="{{ url_for('tasks.list_tasks') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i> Voltar
+                        </a>
+                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editTaskModal">
+                            <i class="fas fa-edit me-1"></i> Editar
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Progress Bar -->
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>Progresso</span>
+                        <span>{{ task.percent_complete }}%</span>
+                    </div>
+                    <div class="progress" style="height: 10px;">
+                        <div class="progress-bar" role="progressbar" 
+                             style="width: {{ task.percent_complete }}%"></div>
+                    </div>
+                </div>
+                
+                <!-- Task Info Grid -->
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label text-muted mb-1">Planner</label>
+                        <div>
+                            {% if task.planner %}
+                            <a href="{{ url_for('planners.planner_detail', planner_id=task.planner.id) }}" 
+                               class="text-decoration-none">
+                                <i class="fas fa-project-diagram me-1"></i>{{ task.planner.title }}
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted mb-1">Bucket</label>
+                        <div>
+                            {% if task.bucket %}
+                            <i class="fas fa-folder me-1"></i>{{ task.bucket.name }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted mb-1">Data de Início</label>
+                        <div>
+                            {% if task.start_date %}
+                            <i class="fas fa-play-circle me-1"></i>{{ task.start_date.strftime('%d/%m/%Y') }}
+                            {% else %}
+                            <span class="text-muted">Não definido</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted mb-1">Data de Vencimento</label>
+                        <div>
+                            {% if task.due_date %}
+                            <i class="fas fa-calendar-alt me-1"></i>{{ task.due_date.strftime('%d/%m/%Y') }}
+                            {% if task.days_until_due is not none %}
+                            <small class="text-muted ms-2">({{ task.days_until_due }} dias)</small>
+                            {% endif %}
+                            {% else %}
+                            <span class="text-muted">Não definido</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Description -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-align-left me-2"></i>Descrição</h5>
+            </div>
+            <div class="card-body">
+                {% if task.description %}
+                <div class="task-description">{{ task.description|safe }}</div>
+                {% else %}
+                <p class="text-muted">Nenhuma descrição fornecida.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Comments -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-comments me-2"></i>Comentários ({{ task.comments_count }})</h5>
+            </div>
+            <div class="card-body">
+                {% if comments %}
+                <div class="comment-list">
+                    {% for comment in comments %}
+                    <div class="comment-item mb-3 pb-3 border-bottom">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0">
+                                <div class="avatar avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center">
+                                    {{ comment.user_name|first|upper if comment.user_name else 'U' }}
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <strong>{{ comment.user_name or 'Usuário' }}</strong>
+                                        <small class="text-muted ms-2">{{ comment.created_date.strftime('%d/%m/%Y %H:%M') }}</small>
+                                    </div>
+                                    {% if comment.is_edited %}
+                                    <small class="text-muted">Editado</small>
+                                    {% endif %}
+                                </div>
+                                <p class="mb-0 mt-2">{{ comment.comment }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">Nenhum comentário ainda.</p>
+                {% endif %}
+                
+                <!-- Add Comment -->
+                <form id="commentForm" class="mt-4">
+                    <div class="mb-3">
+                        <textarea class="form-control" id="newComment" rows="3" 
+                                  placeholder="Adicione um comentário..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane me-1"></i> Enviar Comentário
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- Assignees -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-users me-2"></i>Responsáveis</h5>
+            </div>
+            <div class="card-body">
+                {% set assignments = task.get_assignments() %}
+                {% if assignments %}
+                <div class="assignee-list">
+                    {% for user_id, assignment in assignments.items() %}
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="assignee-avatar me-2">
+                            {{ assignment.userDisplayName|first|upper if assignment.userDisplayName else 'U' }}
+                        </div>
+                        <div>
+                            <div class="fw-medium">{{ assignment.userDisplayName or 'Usuário' }}</div>
+                            <small class="text-muted">{{ assignment.userEmail or '' }}</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">Nenhum responsável atribuído.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Labels -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-tags me-2"></i>Labels</h5>
+            </div>
+            <div class="card-body">
+                {% set labels = task.get_labels() %}
+                {% if labels %}
+                <div class="d-flex flex-wrap gap-2">
+                    {% for label in labels %}
+                    <span class="badge bg-info">{{ label }}</span>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">Nenhuma label definida.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Activity Log -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-history me-2"></i>Histórico de Alterações</h5>
+            </div>
+            <div class="card-body">
+                {% if changes %}
+                <div class="timeline">
+                    {% for change in changes %}
+                    <div class="timeline-item mb-3">
+                        <div class="timeline-indicator"></div>
+                        <div class="timeline-content">
+                            <div class="d-flex justify-content-between">
+                                <strong>{{ change.changed_by_name or change.changed_by }}</strong>
+                                <small class="text-muted">{{ change.changed_at.strftime('%H:%M') }}</small>
+                            </div>
+                            <small class="text-muted d-block mb-1">{{ change.changed_at.strftime('%d/%m/%Y') }}</small>
+                            <p class="mb-0 small">
+                                {% if change.field_changed == 'status' %}
+                                Alterou status de "{{ change.old_value }}" para "{{ change.new_value }}"
+                                {% else %}
+                                {{ change.field_changed|replace('_', ' ')|title }} alterado
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted">Nenhuma alteração registrada.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

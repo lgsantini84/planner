@@ -1,0 +1,50 @@
+<div class="modal fade" id="bulkUpdateModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Atualização em Massa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="bulkUpdateForm">
+                    <div class="mb-3">
+                        <label class="form-label">Status</label>
+                        <select class="form-select" name="status">
+                            <option value="">Não alterar</option>
+                            <option value="not_started">Não Iniciada</option>
+                            <option value="in_progress">Em Progresso</option>
+                            <option value="completed">Concluída</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Prioridade</label>
+                        <select class="form-select" name="priority">
+                            <option value="">Não alterar</option>
+                            <option value="0">Baixa</option>
+                            <option value="1">Média</option>
+                            <option value="2">Alta</option>
+                            <option value="3">Urgente</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Progresso (%)</label>
+                        <input type="range" class="form-range" name="percent_complete" min="0" max="100" step="5">
+                        <div class="d-flex justify-content-between">
+                            <span>0%</span>
+                            <span id="progressValue">50%</span>
+                            <span>100%</span>
+                        </div>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Esta ação será aplicada a <span id="selectedCount">0</span> tarefa(s) selecionada(s)
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="applyBulkUpdate()">Aplicar</button>
+            </div>
+        </div>
+    </div>
+</div>

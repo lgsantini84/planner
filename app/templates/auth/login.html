@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Login - Planner Dashboard PRO{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center mt-5">
+        <div class="col-md-6 col-lg-5">
+            <div class="card fade-in">
+                <div class="card-body p-5">
+                    <!-- Logo/Header -->
+                    <div class="text-center mb-4">
+                        <div class="mb-3">
+                            <i class="fas fa-tasks fa-3x text-primary"></i>
+                        </div>
+                        <h2 class="fw-bold mb-1">Planner Dashboard PRO</h2>
+                        <p class="text-muted">Gerencie suas tarefas do Microsoft Planner em um só lugar</p>
+                    </div>
+                    
+                    <!-- Microsoft Login Button -->
+                    <div class="text-center mb-4">
+                        <a href="{{ url_for('auth.login') }}" class="btn btn-lg btn-primary w-100 py-3">
+                            <i class="fab fa-microsoft me-2"></i>
+                            Entrar com Microsoft 365
+                        </a>
+                    </div>
+                    
+                    <!-- Info Cards -->
+                    <div class="row mt-5">
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-0 bg-light h-100">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-chart-line fa-2x text-primary mb-3"></i>
+                                    <h6 class="fw-bold">Dashboard Inteligente</h6>
+                                    <p class="small text-muted mb-0">Visualize KPIs e métricas em tempo real</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-0 bg-light h-100">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-bell fa-2x text-warning mb-3"></i>
+                                    <h6 class="fw-bold">Notificações</h6>
+                                    <p class="small text-muted mb-0">Receba alertas sobre tarefas importantes</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-0 bg-light h-100">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-file-excel fa-2x text-success mb-3"></i>
+                                    <h6 class="fw-bold">Relatórios</h6>
+                                    <p class="small text-muted mb-0">Gere relatórios personalizados</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="card border-0 bg-light h-100">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-users fa-2x text-info mb-3"></i>
+                                    <h6 class="fw-bold">Colaboração</h6>
+                                    <p class="small text-muted mb-0">Trabalhe em equipe de forma eficiente</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- System Status -->
+                    <div class="mt-4 pt-3 border-top">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                <i class="fas fa-server me-1"></i> Status do Sistema
+                            </small>
+                            <span class="badge bg-success">
+                                <i class="fas fa-circle me-1"></i> Online
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Info Footer -->
+            <div class="text-center mt-4">
+                <p class="text-muted small">
+                    <i class="fas fa-shield-alt me-1"></i>
+                    Suas credenciais são gerenciadas de forma segura pela Microsoft Azure AD
+                </p>
+                <p class="text-muted small">
+                    <i class="fas fa-question-circle me-1"></i>
+                    Problemas para acessar? <a href="mailto:support@exemplo.com">Contate o suporte</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #0078d4 0%, #106ebe 100%);
+        border: none;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+    
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #106ebe 0%, #0078d4 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,120,212,0.3);
+    }
+    
+    .fade-in {
+        animation: fadeIn 0.8s ease-out;
+    }
+</style>
+{% endblock %}

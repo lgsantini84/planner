@@ -1,0 +1,726 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Planner Dashboard PRO{% endblock %}
+
+{% block head %}
+<style>
+    .stat-card {
+        border-radius: 12px;
+        border: none;
+        transition: all 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+    
+    .stat-label {
+        font-size: 0.875rem;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .task-item {
+        border-left: 4px solid transparent;
+        transition: all 0.2s;
+        padding: 12px 15px;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .task-item:hover {
+        background-color: rgba(0,0,0,0.02);
+        transform: translateX(2px);
+    }
+    
+    .task-priority-high {
+        border-left-color: #dc3545;
+    }
+    
+    .task-priority-medium {
+        border-left-color: #ffc107;
+    }
+    
+    .task-priority-low {
+        border-left-color: #28a745;
+    }
+    
+    .progress-thin {
+        height: 4px;
+    }
+    
+    .spinner-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 200px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="fade-in">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 fw-bold mb-1">Dashboard</h1>
+            <p class="text-muted mb-0">Bem-vindo de volta, {{ current_user.display_name or 'Usuário' }}! Aqui está o resumo das suas atividades.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-primary" id="refreshBtn">
+                <i class="fas fa-sync-alt me-2"></i> Atualizar
+            </button>
+            <button class="btn btn-primary" id="syncBtn">
+                <i class="fas fa-cloud-upload-alt me-2"></i> Sincronizar
+            </button>
+        </div>
+    </div>
+    
+    <!-- Stats Row -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card border-left-primary h-100">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-8">
+                            <div class="stat-value" id="totalTasks">0</div>
+                            <div class="stat-label">Total de Tarefas</div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="stat-icon bg-primary text-white">
+                                <i class="fas fa-tasks"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card border-left-success h-100">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-8">
+                            <div class="stat-value" id="completedTasks">0</div>
+                            <div class="stat-label">Concluídas</div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="stat-icon bg-success text-white">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card border-left-warning h-100">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-8">
+                            <div class="stat-value" id="inProgressTasks">0</div>
+                            <div class="stat-label">Em Progresso</div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="stat-icon bg-warning text-white">
+                                <i class="fas fa-spinner"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card border-left-danger h-100">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-8">
+                            <div class="stat-value" id="overdueTasks">0</div>
+                            <div class="stat-label">Atrasadas</div>
+                        </div>
+                        <div class="col-4 text-end">
+                            <div class="stat-icon bg-danger text-white">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Charts and Data -->
+    <div class="row mb-4">
+        <!-- Recent Tasks -->
+        <div class="col-lg-8 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0">Tarefas Recentes</h5>
+                    <a href="{{ url_for('tasks.list_tasks') }}" class="btn btn-sm btn-outline-primary">Ver Todas</a>
+                </div>
+                <div class="card-body p-0">
+                    <div id="recentTasksList" class="spinner-container">
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Carregando tarefas...</span>
+                            </div>
+                            <p class="text-muted mt-2">Carregando tarefas recentes...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Stats -->
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-white">
+                    <h5 class="fw-bold mb-0">Estatísticas Rápidas</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <small class="text-muted d-block mb-1">Taxa de Conclusão</small>
+                        <div class="d-flex align-items-center">
+                            <div class="progress flex-grow-1 progress-thin">
+                                <div id="completionRateBar" class="progress-bar bg-success" role="progressbar" style="width: 0%"></div>
+                            </div>
+                            <span class="ms-2 fw-bold" id="completionRate">0%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <small class="text-muted d-block mb-1">Tarefas Hoje</small>
+                        <div class="d-flex justify-content-between">
+                            <span>Criadas:</span>
+                            <span class="fw-bold" id="tasksToday">0</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <small class="text-muted d-block mb-1">Status do Sistema</small>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>Sincronização:</span>
+                            <span class="badge bg-success" id="syncStatus">Ativa</span>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <h6 class="fw-bold mb-3">Ações Rápidas</h6>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('tasks.list_tasks') }}?assigned_to=me" class="btn btn-outline-primary text-start">
+                            <i class="fas fa-user-check me-2"></i> Minhas Tarefas
+                        </a>
+                        <a href="{{ url_for('tasks.list_tasks') }}?overdue_only=true" class="btn btn-outline-danger text-start">
+                            <i class="fas fa-exclamation-triangle me-2"></i> Tarefas Atrasadas
+                        </a>
+                        <a href="{{ url_for('reports.create_report') }}" class="btn btn-outline-success text-start">
+                            <i class="fas fa-chart-bar me-2"></i> Gerar Relatório
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notifications -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0">Últimas Notificações</h5>
+                    <a href="{{ url_for('settings.notifications') }}" class="btn btn-sm btn-outline-primary">Ver Todas</a>
+                </div>
+                <div class="card-body">
+                    <div id="notificationsList" class="spinner-container">
+                        <div class="text-center">
+                            <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                <span class="visually-hidden">Carregando notificações...</span>
+                            </div>
+                            <p class="text-muted mt-2">Carregando notificações...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Pure JavaScript solution - no jQuery dependency
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Dashboard loaded - connecting to real APIs');
+    
+    // Helper functions
+    function $(id) {
+        return document.getElementById(id);
+    }
+    
+    function showToast(title, message, type = 'info') {
+        // Create toast container if it doesn't exist
+        let toastContainer = $('toastContainer');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.id = 'toastContainer';
+            toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+            document.body.appendChild(toastContainer);
+        }
+        
+        const toastId = 'toast-' + Date.now();
+        const toastHtml = `
+            <div id="${toastId}" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header bg-${type} text-white">
+                    <strong class="me-auto">${title}</strong>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+                </div>
+                <div class="toast-body">
+                    ${message}
+                </div>
+            </div>
+        `;
+        
+        toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+        const toastElement = $(toastId);
+        const toast = new bootstrap.Toast(toastElement);
+        toast.show();
+        
+        toastElement.addEventListener('hidden.bs.toast', function() {
+            this.remove();
+        });
+    }
+    
+    // API Helper
+    async function apiRequest(url, options = {}) {
+        const defaultOptions = {
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            credentials: 'same-origin'
+        };
+        
+        const mergedOptions = { ...defaultOptions, ...options };
+        
+        try {
+            const response = await fetch(url, mergedOptions);
+            
+            if (response.status === 204) {
+                return { success: true };
+            }
+            
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.error || `Erro ${response.status}: ${response.statusText}`);
+            }
+            
+            return data;
+        } catch (error) {
+            console.error('API Error:', error);
+            throw error;
+        }
+    }
+    
+    // Load dashboard statistics
+    async function loadDashboardStats() {
+        try {
+            console.log('Loading dashboard stats...');
+            const data = await apiRequest('/api/dashboard/stats');
+            
+            if (data.success) {
+                // Update KPIs
+                if (data.kpis) {
+                    if ($('totalTasks')) $('totalTasks').textContent = data.kpis.total_tasks || 0;
+                    if ($('completedTasks')) $('completedTasks').textContent = data.kpis.completed_tasks || 0;
+                    if ($('inProgressTasks')) $('inProgressTasks').textContent = data.kpis.in_progress_tasks || 0;
+                    if ($('overdueTasks')) $('overdueTasks').textContent = data.kpis.overdue_tasks || 0;
+                    
+                    // Calculate completion rate
+                    const total = data.kpis.total_tasks || 0;
+                    const completed = data.kpis.completed_tasks || 0;
+                    const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
+                    
+                    if ($('completionRate')) $('completionRate').textContent = completionRate + '%';
+                    if ($('completionRateBar')) $('completionRateBar').style.width = completionRate + '%';
+                    
+                    if ($('tasksToday')) $('tasksToday').textContent = data.kpis.today_tasks || 0;
+                }
+                
+                console.log('Dashboard stats loaded successfully');
+            }
+        } catch (error) {
+            console.error('Error loading dashboard stats:', error);
+            showToast('Erro', 'Não foi possível carregar as estatísticas', 'danger');
+        }
+    }
+    
+    // Load recent tasks
+    async function loadRecentTasks() {
+        try {
+            const recentTasksList = $('recentTasksList');
+            if (!recentTasksList) return;
+            
+            console.log('Loading recent tasks...');
+            const data = await apiRequest('/api/tasks?per_page=5&sort_by=last_modified&sort_order=desc');
+            
+            if (data.success && data.tasks && data.tasks.length > 0) {
+                let html = '';
+                
+                data.tasks.forEach(task => {
+                    // Determine priority class
+                    let priorityClass = 'task-priority-medium';
+                    if (task.priority === 3 || task.priority === 2) {
+                        priorityClass = 'task-priority-high';
+                    } else if (task.priority === 0) {
+                        priorityClass = 'task-priority-low';
+                    }
+                    
+                    // Format date
+                    let dueDate = '';
+                    if (task.due_date) {
+                        const date = new Date(task.due_date);
+                        dueDate = date.toLocaleDateString('pt-BR');
+                    }
+                    
+                    // Status badge
+                    let statusBadge = '';
+                    switch(task.status) {
+                        case 'not_started':
+                            statusBadge = '<span class="badge bg-secondary">Não Iniciada</span>';
+                            break;
+                        case 'in_progress':
+                            statusBadge = '<span class="badge bg-warning">Em Progresso</span>';
+                            break;
+                        case 'completed':
+                            statusBadge = '<span class="badge bg-success">Concluída</span>';
+                            break;
+                        case 'overdue':
+                            statusBadge = '<span class="badge bg-danger">Atrasada</span>';
+                            break;
+                        default:
+                            statusBadge = '<span class="badge bg-secondary">' + task.status + '</span>';
+                    }
+                    
+                    html += `
+                        <div class="task-item ${priorityClass}">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <div class="d-flex align-items-center mb-1">
+                                        ${statusBadge}
+                                        ${task.is_overdue ? '<span class="badge bg-danger ms-2">Atrasada</span>' : ''}
+                                    </div>
+                                    <h6 class="mb-1">
+                                        <a href="/tasks/${task.id}" class="text-decoration-none">${task.title}</a>
+                                    </h6>
+                                    ${dueDate ? `
+                                        <small class="text-muted">
+                                            <i class="far fa-calendar me-1"></i>
+                                            Vence: ${dueDate}
+                                        </small>
+                                    ` : ''}
+                                    ${task.planner && task.planner.title ? `
+                                        <small class="text-muted d-block">
+                                            <i class="fas fa-calendar-alt me-1"></i>
+                                            ${task.planner.title}
+                                        </small>
+                                    ` : ''}
+                                </div>
+                                <div class="text-end ms-3">
+                                    <div class="mb-2">
+                                        <span class="badge ${task.is_overdue ? 'bg-danger' : 'bg-light text-dark'}">
+                                            ${task.percent_complete || 0}%
+                                        </span>
+                                    </div>
+                                    ${task.assignments && Object.keys(task.assignments).length > 0 ? `
+                                        <small class="text-muted d-block">
+                                            <i class="fas fa-user me-1"></i>
+                                            ${Object.keys(task.assignments).length}
+                                        </small>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                recentTasksList.innerHTML = html;
+                console.log('Recent tasks loaded:', data.tasks.length);
+                
+            } else {
+                recentTasksList.innerHTML = `
+                    <div class="text-center py-5">
+                        <i class="fas fa-tasks fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Nenhuma tarefa encontrada</p>
+                        <a href="{{ url_for('tasks.list_tasks') }}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-plus me-1"></i> Criar Primeira Tarefa
+                        </a>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            console.error('Error loading recent tasks:', error);
+            $('recentTasksList').innerHTML = `
+                <div class="text-center py-5">
+                    <i class="fas fa-exclamation-triangle fa-3x text-danger mb-3"></i>
+                    <p class="text-danger">Erro ao carregar tarefas</p>
+                    <button class="btn btn-sm btn-outline-primary" onclick="loadRecentTasks()">
+                        <i class="fas fa-redo me-1"></i> Tentar Novamente
+                    </button>
+                </div>
+            `;
+        }
+    }
+    
+    // Load notifications
+    async function loadNotifications() {
+        try {
+            const notificationsList = $('notificationsList');
+            if (!notificationsList) return;
+            
+            console.log('Loading notifications...');
+            const data = await apiRequest('/api/notifications/unread?limit=5');
+            
+            if (data.success && data.notifications && data.notifications.length > 0) {
+                let html = '';
+                
+                data.notifications.forEach(notification => {
+                    // Format date
+                    let timeAgo = '';
+                    if (notification.created_at) {
+                        const date = new Date(notification.created_at);
+                        const now = new Date();
+                        const diffMs = now - date;
+                        const diffMins = Math.floor(diffMs / 60000);
+                        const diffHours = Math.floor(diffMs / 3600000);
+                        const diffDays = Math.floor(diffMs / 86400000);
+                        
+                        if (diffMins < 1) timeAgo = 'Agora mesmo';
+                        else if (diffMins < 60) timeAgo = `${diffMins} min atrás`;
+                        else if (diffHours < 24) timeAgo = `${diffHours} h atrás`;
+                        else timeAgo = `${diffDays} dias atrás`;
+                    }
+                    
+                    // Notification icon based on type
+                    let icon = 'fas fa-bell';
+                    let iconClass = 'bg-primary';
+                    
+                    switch(notification.type) {
+                        case 'info':
+                            icon = 'fas fa-info-circle';
+                            iconClass = 'bg-info';
+                            break;
+                        case 'warning':
+                            icon = 'fas fa-exclamation-triangle';
+                            iconClass = 'bg-warning';
+                            break;
+                        case 'error':
+                            icon = 'fas fa-times-circle';
+                            iconClass = 'bg-danger';
+                            break;
+                        case 'success':
+                            icon = 'fas fa-check-circle';
+                            iconClass = 'bg-success';
+                            break;
+                        case 'task_assigned':
+                            icon = 'fas fa-user-plus';
+                            iconClass = 'bg-primary';
+                            break;
+                        case 'task_overdue':
+                            icon = 'fas fa-clock';
+                            iconClass = 'bg-danger';
+                            break;
+                        case 'task_completed':
+                            icon = 'fas fa-check';
+                            iconClass = 'bg-success';
+                            break;
+                    }
+                    
+                    html += `
+                        <div class="d-flex mb-3">
+                            <div class="flex-shrink-0">
+                                <div class="${iconClass} rounded-circle d-flex align-items-center justify-content-center" 
+                                     style="width: 40px; height: 40px;">
+                                    <i class="${icon} text-white"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="mb-1">${notification.title}</h6>
+                                <p class="mb-1">${notification.message}</p>
+                                <small class="text-muted">
+                                    <i class="far fa-clock me-1"></i> ${timeAgo}
+                                </small>
+                                ${notification.action_url ? `
+                                    <div class="mt-2">
+                                        <a href="${notification.action_url}" class="btn btn-sm btn-outline-primary">
+                                            ${notification.action_text || 'Ver Detalhes'}
+                                        </a>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                notificationsList.innerHTML = html;
+                console.log('Notifications loaded:', data.notifications.length);
+                
+            } else {
+                notificationsList.innerHTML = `
+                    <div class="text-center py-4">
+                        <i class="fas fa-bell-slash fa-2x text-muted mb-3"></i>
+                        <p class="text-muted">Nenhuma notificação não lida</p>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            console.error('Error loading notifications:', error);
+            $('notificationsList').innerHTML = `
+                <div class="text-center py-4">
+                    <i class="fas fa-exclamation-triangle fa-2x text-danger mb-3"></i>
+                    <p class="text-danger">Erro ao carregar notificações</p>
+                </div>
+            `;
+        }
+    }
+    
+    // Sync data with Microsoft Planner
+    async function syncData() {
+        const syncBtn = $('syncBtn');
+        if (!syncBtn) return;
+        
+        const originalText = syncBtn.innerHTML;
+        syncBtn.disabled = true;
+        syncBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Sincronizando...';
+        
+        // Update sync status
+        if ($('syncStatus')) {
+            $('syncStatus').className = 'badge bg-warning';
+            $('syncStatus').textContent = 'Sincronizando...';
+        }
+        
+        try {
+            console.log('Starting sync...');
+            const data = await apiRequest('/api/sync', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ force: true })
+            });
+            
+            if (data.success) {
+                showToast('Sucesso', 'Sincronização completada com sucesso!', 'success');
+                console.log('Sync successful:', data);
+                
+                // Update sync status
+                if ($('syncStatus')) {
+                    $('syncStatus').className = 'badge bg-success';
+                    $('syncStatus').textContent = 'Atualizado';
+                }
+                
+                // Reload all data
+                setTimeout(() => {
+                    loadDashboardStats();
+                    loadRecentTasks();
+                    loadNotifications();
+                }, 1000);
+                
+            } else {
+                throw new Error(data.error || 'Erro na sincronização');
+            }
+        } catch (error) {
+            console.error('Sync error:', error);
+            showToast('Erro', error.message || 'Falha na sincronização', 'danger');
+            
+            // Update sync status
+            if ($('syncStatus')) {
+                $('syncStatus').className = 'badge bg-danger';
+                $('syncStatus').textContent = 'Erro';
+            }
+        } finally {
+            setTimeout(() => {
+                syncBtn.disabled = false;
+                syncBtn.innerHTML = originalText;
+            }, 2000);
+        }
+    }
+    
+    // Check sync status
+    async function checkSyncStatus() {
+        try {
+            const data = await apiRequest('/api/sync/status');
+            
+            if (data.success) {
+                const syncStatus = $('syncStatus');
+                if (syncStatus) {
+                    if (data.token_valid) {
+                        syncStatus.className = data.needs_sync ? 'badge bg-warning' : 'badge bg-success';
+                        syncStatus.textContent = data.needs_sync ? 'Necessita Sincronização' : 'Atualizado';
+                    } else {
+                        syncStatus.className = 'badge bg-danger';
+                        syncStatus.textContent = 'Token Inválido';
+                    }
+                }
+            }
+        } catch (error) {
+            console.error('Error checking sync status:', error);
+        }
+    }
+    
+    // Setup event listeners
+    const refreshBtn = $('refreshBtn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', function() {
+            loadDashboardStats();
+            loadRecentTasks();
+            loadNotifications();
+            checkSyncStatus();
+            showToast('Atualizado', 'Dados atualizados com sucesso!', 'info');
+        });
+    }
+    
+    const syncBtn = $('syncBtn');
+    if (syncBtn) {
+        syncBtn.addEventListener('click', syncData);
+    }
+    
+    // Load initial data
+    loadDashboardStats();
+    loadRecentTasks();
+    loadNotifications();
+    checkSyncStatus();
+    
+    // Auto-refresh every 2 minutes
+    setInterval(() => {
+        loadDashboardStats();
+        checkSyncStatus();
+    }, 120000);
+    
+    // Make functions available globally
+    window.loadDashboardStats = loadDashboardStats;
+    window.loadRecentTasks = loadRecentTasks;
+    window.loadNotifications = loadNotifications;
+    window.syncData = syncData;
+    window.showToast = showToast;
+});
+</script>
+{% endblock %}

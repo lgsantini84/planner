@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block title %}Planners - Planner Dashboard PRO{% endblock %}
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h1><i class="fas fa-project-diagram me-2"></i>Planners</h1>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="syncPlanners()">
+                    <i class="fas fa-sync-alt me-1"></i> Sincronizar
+                </button>
+            </div>
+        </div>
+        <p class="text-muted">Gerencie seus planners e grupos do Microsoft Planner</p>
+    </div>
+</div>
+
+<!-- Groups Filter -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-filter me-2"></i>Filtrar por Grupo</h5>
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="{{ url_for('planners.list_planners') }}" 
+                       class="btn btn-outline-primary {% if not request.args.get('group_id') %}active{% endif %}">
+                        Todos os Grupos
+                    </a>
+                    {% for group in groups %}
+                    <a href="?group_id={{ group.id }}" 
+                       class="btn btn-outline-primary {% if request.args.get('group_id') == group.id %}active{% endif %}">
+                        {{ group.name }} ({{ group.total_planners }})
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Planners Grid -->
+<div class="row">
+    {% for planner in planners %}
+    {% if not request.args.get('group_id') or planner.group_id == request.args.get('group_id') %}
+    <div class="col-xl-4 col-lg-6 mb-4">
+        <div class="card h-100 planner-card" style="border-left: 5px solid {{ planner.color or '#3498db' }};">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h5 class="card-title mb-1">{{ planner.title }}</h5>
+                        {% if planner.group %}
+                        <p class="card-subtitle text-muted mb-2">
+                            <i class="fas fa-users me-1"></i>{{ planner.group.name }}
+                        </p>
+                        {% endif %}
+                        {% if planner.description %}
+                        <p class="card-text small text-muted">{{ planner.description|truncate(100) }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <button class="btn btn-sm btn-outline-primary" onclick="toggleFavorite('{{ planner.id }}', this)">
+                            <i class="{% if planner.is_favorite %}fas{% else %}far{% endif %} fa-star"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Stats -->
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <div class="text-center p-2 bg-light rounded">
+                            <div class="h4 mb-0">{{ planner.total_tasks }}</div>
+                            <small class="text-muted">Tarefas</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center p-2 bg-light rounded">
+                            <div class="h4 mb-0">{{ planner.completed_tasks }}</div>
+                            <small class="text-muted">Concluídas</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Progress -->
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <small>Progresso</small>
+                        <small>{{ "%.1f"|format(planner.completion_rate) }}%</small>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar" style="width: {{ planner.completion_rate }}%"></div>
+                    </div>
+                </div>
+                
+                <!-- Actions -->
+                <div class="d-flex gap-2">
+                    <a href="{{ url_for('planners.planner_detail', planner_id=planner.id) }}" 
+                       class="btn btn-outline-primary btn-sm flex-grow-1">
+                        <i class="fas fa-eye me-1"></i> Ver Detalhes
+                    </a>
+                    <button class="btn btn-outline-info btn-sm" 
+                            onclick="showStats('{{ planner.id }}')">
+                        <i class="fas fa-chart-bar"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="card-footer text-muted small">
+                <div class="d-flex justify-content-between">
+                    <span>
+                        <i class="fas fa-clock me-1"></i>
+                        {% if planner.last_sync %}
+                        Atualizado {{ planner.last_sync.strftime('%d/%m %H:%M') }}
+                        {% endif %}
+                    </span>
+                    <span>
+                        {% if planner.overdue_tasks > 0 %}
+                        <span class="badge bg-danger">{{ planner.overdue_tasks }} atrasadas</span>
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="col-12">
+        <div class="text-center py-5">
+            <i class="fas fa-project-diagram fa-4x text-muted mb-3"></i>
+            <h4>Nenhum planner encontrado</h4>
+            <p class="text-muted">Tente sincronizar os planners ou verificar suas permissões</p>
+            <button class="btn btn-primary" onclick="syncPlanners()">
+                <i class="fas fa-sync-alt me-1"></i> Sincronizar Planners
+            </button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
